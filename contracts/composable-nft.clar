@@ -5,6 +5,9 @@
 (define-map token-spender ((token-id uint)) ((spender principal)))
 (define-map token-count ((owner principal)) ((count uint)))
 (define-map account-operator ((operator principal) (account principal)) ((is-approved bool)))
+(define-map parent-token ((token-id uint)) ((parent-id uint)))
+(define-map child-tokens ((token-id uint)) ((child-ids (list 10 uint))))
+
 
 ;; Constant
 (define-constant same-spender-err (err u1))
@@ -16,7 +19,7 @@
 (define-private (balance-of (account principal))
   (default-to u0
     (get count
-      (map-get? token-count ((owner account)))
+      (map-get? token-count {owner: account})
     )
   )
 )
@@ -30,7 +33,7 @@
     ((approve-spender
         (unwrap!
           (get spender
-            (map-get? token-spender ((token-id token-id))))
+            (map-get? token-spender {token-id: token-id}))
           false
         )
     ))
@@ -38,11 +41,10 @@
   )
 )
 
-
 (define-private (is-operator-approved (operator principal) (account principal))
   (unwrap!
     (get is-approved
-      (map-get? account-operator ((operator operator) (account account)))
+      (map-get? account-operator { operator: operator, account: account })
     )
     false
   )
@@ -66,14 +68,24 @@
   )
 )
 
+(define-private (can-attach (actor principal) (token-id uint))
+  (and
+    (is-eq
+      u0
+      (unwrap! (get parent-id (map-get? parent-token {token-id: token-id})) false)
+    )
+    (can-transfer actor token-id)
+  )
+)
+
 (define-private (register-token (new-owner principal) (token-id uint))
   (let
     ((current-balance (balance-of new-owner)))
     (begin
       (nft-mint? composable-token token-id new-owner)
       (map-set token-count
-        ((owner new-owner))
-        ((count (+ u1 current-balance)))
+        {owner: new-owner}
+        {count: (+ u1 current-balance)}
       )
       true
     )
@@ -84,10 +96,10 @@
   (let
     ((current-balance (balance-of owner)))
     (begin
-      (map-delete token-spender ((token-id token-id)))
+      (map-delete token-spender {token-id: token-id})
       (map-set token-count
-        ((owner owner))
-        ((count (- current-balance u1)))
+        {owner: owner}
+        {count: (- current-balance u1)}
       )
       true
     )
@@ -107,8 +119,8 @@
       )
       (begin
         (map-set token-spender
-          ((token-id token-id))
-          ((spender spender))
+          {token-id: token-id}
+          {spender: spender}
         )
         (ok token-id)
       )
@@ -122,14 +134,13 @@
     same-spender-err
     (begin
       (map-set account-operator
-        ((operator operator) (account tx-sender))
-        ((is-approved is-approved))
+        {operator: operator, account: tx-sender}
+        {is-approved: is-approved}
       )
       (ok true)
     )
   )
 )
-
 
 
 (define-public (transfer-from (owner principal) (recipient principal) (token-id uint))
@@ -143,12 +154,12 @@
       (and
         (unwrap-panic (nft-transfer? composable-token token-id owner recipient))
         (map-set token-count
-          ((owner owner))
-          ((count (- (balance-of owner) u1)))
+          {owner: owner}
+          {count: (- (balance-of owner) u1) }
         )
         (map-set token-count
-          ((owner recipient))
-          ((count (+ (balance-of recipient) u1)))
+          {owner: recipient}
+          {count: (+ (balance-of recipient) u1)}
         )
       )
       (ok token-id)
