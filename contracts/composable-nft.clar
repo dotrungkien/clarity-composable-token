@@ -51,3 +51,45 @@
     actor
   )
 )
+
+(define-private (can-transfer (actor principal) (token-id uint))
+  (or
+    (is-owner actor token-id)
+    (is-spender-approved actor token-id)
+    (is-operator-approved
+      actor
+      (unwrap! (nft-get-owner? composable-nft token-id) false)
+    )
+  )
+)
+
+(define-private (mint-token (new-owner principal) (token-id uint))
+  (let
+    ((current-balance (balance-of new-owner)))
+    (begin
+      (nft-mint? composable-nft token-id new-owner)
+      (map-set token-count
+        ((owner new-owner))
+        ((count (+ u1 current-balance)))
+      )
+      true
+    )
+  )
+)
+
+(define-private (release-token (owner principal) (token-id uint))
+  (let
+    ((current-balance (balance-of owner)))
+    (begin
+      (map-delete token-spender ((token-id token-id)))
+      (map-set token-count
+        ((owner owner))
+        ((count (- current-balance u1)))
+      )
+      true
+    )
+  )
+)
+
+
+
