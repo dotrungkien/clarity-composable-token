@@ -6,7 +6,7 @@
 (define-map token-count ((owner principal)) ((count uint)))
 (define-map account-operator ((operator principal) (account principal)) ((is-approved bool)))
 (define-map parent-token ((token-id uint)) ((parent-id uint)))
-(define-map child-tokens ((token-id uint)) ((child-ids (list 10 uint))))
+(define-map child-tokens ((parent-id uint)) ((child-ids (list 10 uint))))
 
 
 ;; Constant
@@ -15,6 +15,10 @@
 (define-constant failed-to-move-token-err (err u3))
 (define-constant unauthorized-transfer-err (err u4))
 (define-constant failed-to-mint-err (err u5))
+(define-constant zero-id-err (err u6))
+(define-constant failed-to-attach-err (err u7))
+(define-constant failed-to-detach-err (err u8))
+
 
 (define-private (balance-of (account principal))
   (default-to u0
@@ -68,26 +72,59 @@
   )
 )
 
-(define-private (can-attach (actor principal) (token-id uint))
+(define-private (can-attach (actor principal) (token-id uint) (parent-id uint))
   (and
+    (can-transfer actor token-id)
+    (not (is-eq token-id parent-id))
     (is-eq
       u0
       (unwrap! (get parent-id (map-get? parent-token {token-id: token-id})) false)
     )
+    ;; parent of parent-id must not be current token-id
+    (not
+      (is-eq
+        token-id
+        (unwrap! (get parent-id (map-get? parent-token {token-id: parent-id})) false)
+      )
+    )
+  )
+)
+
+(define-private (can-detach (actor principal) (token-id uint) )
+  (and
     (can-transfer actor token-id)
+    (>
+      (unwrap! (get parent-id (map-get? parent-token {token-id: token-id})) false)
+      u0
+    )
   )
 )
 
 (define-private (register-token (new-owner principal) (token-id uint))
-  (let
-    ((current-balance (balance-of new-owner)))
-    (begin
-      (nft-mint? composable-token token-id new-owner)
-      (map-set token-count
-        {owner: new-owner}
-        {count: (+ u1 current-balance)}
+  (if (> token-id u0)
+    (let
+      ((current-balance (balance-of new-owner)))
+      (begin
+        (nft-mint? composable-token token-id new-owner)
+        (map-set token-count
+          {owner: new-owner}
+          {count: (+ u1 current-balance)}
+        )
+        true
       )
-      true
+    )
+    (begin false)
+  )
+)
+
+(define-private (mint! (owner principal) (token-id uint))
+  (if (is-eq token-id u0)
+    zero-id-err
+    (begin
+      (if (register-token owner token-id)
+        (ok token-id)
+        failed-to-mint-err
+      )
     )
   )
 )
@@ -106,6 +143,12 @@
   )
 )
 
+;;(define-private (filter-id (child-ids (list 10 uint)) (child-id uint))
+;;
+;;)
+
+
+;; Public function
 (define-public (set-spender-approval (spender principal) (token-id uint))
   (if (is-eq spender tx-sender)
     same-spender-err
@@ -142,6 +185,61 @@
   )
 )
 
+(define-public (attach (owner principal) (token-id uint) (parent-id uint))
+  (if
+    (and
+      (can-attach tx-sender token-id parent-id)
+      (is-owner owner token-id)
+      (is-owner owner parent-id)
+    )
+    ;; attach
+    (begin
+      (map-set parent-token
+        {token-id: token-id}
+        {parent-id: parent-id}
+      )
+      (let ((current-child-ids (unwrap! (get child-ids (map-get? child-tokens {parent-id: parent-id})) (err u100))))
+        (let ((new-child-ids (unwrap! (as-max-len? (append current-child-ids token-id) u10) (err u100))))
+          (map-set child-tokens
+            {parent-id: parent-id}
+            {child-ids: new-child-ids}
+          )
+        )
+      )
+      (ok token-id)
+    )
+    failed-to-attach-err
+  )
+)
+
+
+(define-public (detach (owner principal) (token-id uint) (parent-id uint))
+  (if
+    (and
+      (can-detach tx-sender token-id)
+      (is-owner owner token-id)
+      (is-owner owner parent-id)
+    )
+    ;; dettach
+    (begin
+      (map-set parent-token
+        {token-id: token-id}
+        {parent-id: u0}
+      )
+      ;;(let ((current-child-ids (unwrap! (get child-ids (map-get? child-tokens {parent-id: parent-id})) (list))))
+      ;;  (let ((new-child-ids (unwrap! (as-max-len? (append current-child-ids token-id) u10) (list))))
+      ;;    (map-set child-tokens
+      ;;      {parent-id: parent-id}
+      ;;      {child-ids: new-child-ids}
+      ;;    )
+      ;;  )
+      ;;)
+      (ok token-id)
+    )
+    failed-to-attach-err
+  )
+)
+
 
 (define-public (transfer-from (owner principal) (recipient principal) (token-id uint))
   (if
@@ -173,31 +271,10 @@
   (transfer-from tx-sender recipient token-id)
 )
 
-(define-private (mint! (owner principal) (token-id uint))
-  (if (register-token owner token-id)
-    (ok token-id)
-    failed-to-mint-err
-  )
+(begin
+  (mint! 'SP2R8MPF1WYDQD2AZY9GCZRAVG8JYZ25FNB8X45EK u202008)
+  (mint! 'SP2R8MPF1WYDQD2AZY9GCZRAVG8JYZ25FNB8X45EK u202009)
+  (mint! 'SP1DQW1980HVS71XPSW91A8K2W2R3ZAJ75M5M0K5W u202010)
+
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
