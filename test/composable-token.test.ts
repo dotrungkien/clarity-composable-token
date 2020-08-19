@@ -309,6 +309,7 @@ describe('ComposableToken Test Suite', () => {
         expect(allowanceYann).false;
       });
     });
+
     describe('Alice revoking Yann as an operator', () => {
       before(async () => {
         await instance.setOperatorApproval(yann, false, { sender: alice });
@@ -319,19 +320,19 @@ describe('ComposableToken Test Suite', () => {
         expect(allowanceYann).false;
       });
     });
+  });
 
-    describe('Alice attach asset #6 to #4', () => {
-      before(async () => {
-        await instance.mintToken(alice, 4, { sender: contractOwner });
-        await instance.mintToken(alice, 5, { sender: contractOwner });
-        await instance.mintToken(alice, 6, { sender: contractOwner });
-      });
+  describe('Alice attach asset #6 to #4', () => {
+    before(async () => {
+      await instance.mintToken(alice, 4, { sender: contractOwner });
+      await instance.mintToken(alice, 5, { sender: contractOwner });
+      await instance.mintToken(alice, 6, { sender: contractOwner });
+    });
 
-      it('should make Alice able to attach her own asset #4', async () => {
-        const canAttach = await instance.canAttach(alice, 4, 6);
-        console.log(canAttach);
-        expect(canAttach).true;
-      });
+    it.only('should make Alice able to attach her own asset #4', async () => {
+      const canAttach = await instance.canAttach(alice, 4, 6);
+      console.log(canAttach);
+      expect(canAttach).true;
     });
   });
 
