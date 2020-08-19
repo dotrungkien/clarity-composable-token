@@ -93,4 +93,13 @@ export class ComposableToken extends Client {
     const res = await this.submitTransaction(tx);
     return res;
   }
+
+  async mintToken(owner: string, tokenId: number, params: { sender: string }): Promise<Receipt> {
+    const tx = this.createTransaction({
+      method: { name: 'mint-token', args: [`'${owner}`, `${tokenId}`] },
+    });
+    await tx.sign(params.sender);
+    const res = await this.submitTransaction(tx);
+    return res;
+  }
 }

@@ -1,13 +1,12 @@
 ;; Composable Non Fungible Token
-(define-non-fungible-token composable-token uint)
+(define-non-fungible-token composable-token int)
 
 ;; Storage
-(define-map token-spender ((token-id uint)) ((spender principal)))
-(define-map token-count ((owner principal)) ((count uint)))
+(define-map token-spender ((token-id int)) ((spender principal)))
+(define-map token-count ((owner principal)) ((count int)))
 (define-map account-operator ((operator principal) (account principal)) ((is-approved bool)))
-(define-map parent-token ((token-id uint)) ((parent-id uint)))
-(define-map child-tokens ((parent-id uint)) ((child-ids (list 10 uint))))
-
+(define-map parent-token ((token-id int)) ((parent-id int)))
+(define-map child-tokens ((parent-id int)) ((child-ids (list 10 int))))
 
 ;; Constant
 (define-constant same-spender-err (err u1))
@@ -21,18 +20,18 @@
 
 
 (define-private (balance-of (account principal))
-  (default-to u0
+  (default-to 0
     (get count
       (map-get? token-count {owner: account})
     )
   )
 )
 
-(define-public (owner-of? (token-id uint))
+(define-public (owner-of? (token-id int))
   (ok (nft-get-owner? composable-token token-id))
 )
 
-(define-private (is-spender-approved (spender principal) (token-id uint))
+(define-private (is-spender-approved (spender principal) (token-id int))
   (let
     ((approve-spender
         (unwrap!
@@ -54,14 +53,14 @@
   )
 )
 
-(define-private (is-owner (actor principal) (token-id uint))
+(define-private (is-owner (actor principal) (token-id int))
   (is-eq
     (unwrap! (nft-get-owner? composable-token token-id) false)
     actor
   )
 )
 
-(define-private (can-transfer (actor principal) (token-id uint))
+(define-private (can-transfer (actor principal) (token-id int))
   (or
     (is-owner actor token-id)
     (is-spender-approved actor token-id)
@@ -72,12 +71,12 @@
   )
 )
 
-(define-private (can-attach (actor principal) (token-id uint) (parent-id uint))
+(define-private (can-attach (actor principal) (token-id int) (parent-id int))
   (and
     (can-transfer actor token-id)
     (not (is-eq token-id parent-id))
     (is-eq
-      u0
+      0
       (unwrap! (get parent-id (map-get? parent-token {token-id: token-id})) false)
     )
     ;; parent of parent-id must not be current token-id
@@ -90,35 +89,32 @@
   )
 )
 
-(define-private (can-detach (actor principal) (token-id uint) )
+(define-private (can-detach (actor principal) (token-id int) )
   (and
     (can-transfer actor token-id)
     (>
       (unwrap! (get parent-id (map-get? parent-token {token-id: token-id})) false)
-      u0
+      0
     )
   )
 )
 
-(define-private (register-token (new-owner principal) (token-id uint))
-  (if (> token-id u0)
-    (let
-      ((current-balance (balance-of new-owner)))
-      (begin
-        (nft-mint? composable-token token-id new-owner)
-        (map-set token-count
-          {owner: new-owner}
-          {count: (+ u1 current-balance)}
-        )
-        true
+(define-private (register-token (new-owner principal) (token-id int))
+  (let
+    ((current-balance (balance-of new-owner)))
+    (begin
+      (nft-mint? composable-token token-id new-owner)
+      (map-set token-count
+        {owner: new-owner}
+        {count: (+ 1 current-balance)}
       )
+      true
     )
-    (begin false)
   )
 )
 
-(define-private (mint! (owner principal) (token-id uint))
-  (if (is-eq token-id u0)
+(define-public (mint-token (owner principal) (token-id int))
+  (if (is-eq token-id 0)
     zero-id-err
     (begin
       (if (register-token owner token-id)
@@ -129,27 +125,27 @@
   )
 )
 
-(define-private (release-token (owner principal) (token-id uint))
+(define-private (release-token (owner principal) (token-id int))
   (let
     ((current-balance (balance-of owner)))
     (begin
       (map-delete token-spender {token-id: token-id})
       (map-set token-count
         {owner: owner}
-        {count: (- current-balance u1)}
+        {count: (- current-balance 1)}
       )
       true
     )
   )
 )
 
-;;(define-private (filter-id (child-ids (list 10 uint)) (child-id uint))
+;;(define-private (filter-id (child-ids (list 10 int)) (child-id int))
 ;;
 ;;)
 
 
 ;; Public function
-(define-public (set-spender-approval (spender principal) (token-id uint))
+(define-public (set-spender-approval (spender principal) (token-id int))
   (if (is-eq spender tx-sender)
     same-spender-err
     (if
@@ -185,7 +181,7 @@
   )
 )
 
-(define-public (attach (owner principal) (token-id uint) (parent-id uint))
+(define-public (attach (owner principal) (token-id int) (parent-id int))
   (if
     (and
       (can-attach tx-sender token-id parent-id)
@@ -213,7 +209,7 @@
 )
 
 
-(define-public (detach (owner principal) (token-id uint) (parent-id uint))
+(define-public (detach (owner principal) (token-id int) (parent-id int))
   (if
     (and
       (can-detach tx-sender token-id)
@@ -224,7 +220,7 @@
     (begin
       (map-set parent-token
         {token-id: token-id}
-        {parent-id: u0}
+        {parent-id: 0}
       )
       ;;(let ((current-child-ids (unwrap! (get child-ids (map-get? child-tokens {parent-id: parent-id})) (list))))
       ;;  (let ((new-child-ids (unwrap! (as-max-len? (append current-child-ids token-id) u10) (list))))
@@ -241,7 +237,7 @@
 )
 
 
-(define-public (transfer-from (owner principal) (recipient principal) (token-id uint))
+(define-public (transfer-from (owner principal) (recipient principal) (token-id int))
   (if
     (and
       (can-transfer tx-sender token-id)
@@ -253,11 +249,11 @@
         (unwrap-panic (nft-transfer? composable-token token-id owner recipient))
         (map-set token-count
           {owner: owner}
-          {count: (- (balance-of owner) u1) }
+          {count: (- (balance-of owner) 1) }
         )
         (map-set token-count
           {owner: recipient}
-          {count: (+ (balance-of recipient) u1)}
+          {count: (+ (balance-of recipient) 1)}
         )
       )
       (ok token-id)
@@ -267,14 +263,14 @@
   )
 )
 
-(define-public (transfer (recipient principal) (token-id uint))
+(define-public (transfer (recipient principal) (token-id int))
   (transfer-from tx-sender recipient token-id)
 )
 
 (begin
-  (mint! 'SP2R8MPF1WYDQD2AZY9GCZRAVG8JYZ25FNB8X45EK u202008)
-  (mint! 'SP2R8MPF1WYDQD2AZY9GCZRAVG8JYZ25FNB8X45EK u202009)
-  (mint! 'SP1DQW1980HVS71XPSW91A8K2W2R3ZAJ75M5M0K5W u202010)
+  (mint-token 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7 1)
+  (mint-token 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7 2)
+  (mint-token 'SP1DQW1980HVS71XPSW91A8K2W2R3ZAJ75M5M0K5W 3)
 
 )
 
