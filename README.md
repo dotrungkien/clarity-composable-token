@@ -26,19 +26,19 @@ One of the most interesting aspects of Cryptokitties was the breeding function. 
 
 ![tokens](tokens.png)
 
-- Composable token is a nft token, base on ERC721 token
-- Each token has it only parent, and can has many childs.
+- Composable token is a nft token, based on ERC721 token.
+- Each token can have only one parent, and can have many childs.
 - When attach token A to token B:
   - token A != token B
-  - token B parent must not equal to token A to avoid recursion attachment
+  - token B parent must different than token A to avoid recursion attachment.
   - token A and B both belongs to a same owner.
-  - operator account also has permission to attach and detach token
-  - the actor of attach action must be the token owner or token owner's operator account
-  - update parent for token A, and childrens for token B
+  - operator account also has permission to attach and detach token.
+  - the actor of attach action must be the token owner or token owner's operator account.
+  - update parent for token A, and childrens for token B.
 - When detach token A from token B
-  - token A must be attaching on token B
-  - the actor of attach action must be the token owner or token owner's operator account
-  - update parent for token A, and childrens for token B
+  - token A must be attaching on token B.
+  - the actor of attach action must be the token owner or token owner's operator account.
+  - update parent for token A, and childrens for token B.
 
 ## Implementation
 
