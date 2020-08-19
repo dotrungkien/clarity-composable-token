@@ -8,6 +8,9 @@
 (define-map parent-token ((token-id int)) ((parent-id int)))
 (define-map child-tokens ((parent-id int)) ((child-ids (list 10 int))))
 
+;; Variable
+(define-data-var token-ids (list 10 int) (list))
+
 ;; Constant
 (define-constant same-spender-err (err u1))
 (define-constant not-approved-spender-err (err u2))
@@ -29,6 +32,18 @@
 
 (define-public (owner-of? (token-id int))
   (ok (nft-get-owner? composable-token token-id))
+)
+
+(define-private (parent-of (token-id int))
+  (default-to 0
+    (get parent-id
+      (map-get? parent-token {token-id: token-id})
+    )
+  )
+)
+
+(define-private (childs-of (parent-id int))
+  (unwrap! (get child-ids (map-get? child-tokens {parent-id: parent-id})) (list))
 )
 
 (define-private (is-spender-approved (spender principal) (token-id int))
@@ -82,15 +97,20 @@
       )
     )
     (not (is-eq token-id parent-id))
-    (is-eq
-      0
-      (unwrap! (get parent-id (map-get? parent-token {token-id: token-id})) false)
+
+    (is-none
+      (get parent-id (map-get? parent-token {token-id: token-id}))
     )
     ;; parent of parent-id must not be current token-id
-    (not
-      (is-eq
-        token-id
-        (unwrap! (get parent-id (map-get? parent-token {token-id: parent-id})) false)
+    (or
+      (is-none
+        (get parent-id (map-get? parent-token {token-id: parent-id}))
+      )
+      (not
+        (is-eq
+          token-id
+          (unwrap! (get parent-id (map-get? parent-token {token-id: parent-id})) false)
+        )
       )
     )
   )
@@ -153,11 +173,6 @@
   )
 )
 
-;;(define-private (filter-id (child-ids (list 10 int)) (child-id int))
-;;
-;;)
-
-
 ;; Public function
 (define-public (set-spender-approval (spender principal) (token-id int))
   (if (is-eq spender tx-sender)
@@ -195,12 +210,17 @@
   )
 )
 
+(define-private (add-to (child-ids (list 10 int)) (token-id int))
+  (unwrap! (as-max-len? (append child-ids token-id) u10) child-ids)
+)
+
 (define-public (attach (owner principal) (token-id int) (parent-id int))
   (if
     (and
       (can-attach tx-sender token-id parent-id)
       (is-owner owner token-id)
       (is-owner owner parent-id)
+      (< (len (childs-of parent-id)) u10)
     )
     ;; attach
     (begin
@@ -208,13 +228,10 @@
         {token-id: token-id}
         {parent-id: parent-id}
       )
-      (let ((current-child-ids (unwrap! (get child-ids (map-get? child-tokens {parent-id: parent-id})) (err u100))))
-        (let ((new-child-ids (unwrap! (as-max-len? (append current-child-ids token-id) u10) (err u100))))
-          (map-set child-tokens
-            {parent-id: parent-id}
-            {child-ids: new-child-ids}
-          )
-        )
+
+      (map-set child-tokens
+        {parent-id: parent-id}
+        {child-ids: (add-to (childs-of parent-id) token-id ) }
       )
       (ok token-id)
     )
@@ -223,12 +240,11 @@
 )
 
 
-(define-public (detach (owner principal) (token-id int) (parent-id int))
+(define-public (detach (owner principal) (token-id int))
   (if
     (and
       (can-detach tx-sender token-id)
       (is-owner owner token-id)
-      (is-owner owner parent-id)
     )
     ;; dettach
     (begin
@@ -236,14 +252,8 @@
         {token-id: token-id}
         {parent-id: 0}
       )
-      ;;(let ((current-child-ids (unwrap! (get child-ids (map-get? child-tokens {parent-id: parent-id})) (list))))
-      ;;  (let ((new-child-ids (unwrap! (as-max-len? (append current-child-ids token-id) u10) (list))))
-      ;;    (map-set child-tokens
-      ;;      {parent-id: parent-id}
-      ;;      {child-ids: new-child-ids}
-      ;;    )
-      ;;  )
-      ;;)
+
+      ;; TODO: remove childrend from parent's chil-ids list
       (ok token-id)
     )
     failed-to-attach-err

@@ -15,6 +15,23 @@ export class ComposableToken extends Client {
     return parseInt(res.result as string);
   }
 
+  async parentOf(tokenId: number): Promise<number> {
+    const query = this.createQuery({ method: { name: 'parent-of', args: [`${tokenId}`] } });
+    const res = await this.submitQuery(query);
+    const parentId = parseInt(res.result as string);
+    return parentId ? parentId : null;
+  }
+
+  async childsOf(parentId: number): Promise<any> {
+    const query = this.createQuery({ method: { name: 'childs-of', args: [`${parentId}`] } });
+    const res = await this.submitQuery(query);
+    const result = res.result;
+    let childsString = result.slice(1, result.length - 1);
+    if (childsString === '') return [];
+    let childs = childsString.split(' ').map(i => parseInt(i));
+    return childs;
+  }
+
   async ownerOf(tokenId: number): Promise<string> {
     const query = this.createQuery({ method: { name: 'owner-of?', args: [`${tokenId}`] } });
     const res = await this.submitQuery(query);
@@ -104,6 +121,29 @@ export class ComposableToken extends Client {
   async transfer(to: string, tokenId: number, params: { sender: string }): Promise<Receipt> {
     const tx = this.createTransaction({
       method: { name: 'transfer', args: [`'${to}`, `${tokenId}`] },
+    });
+    await tx.sign(params.sender);
+    const res = await this.submitTransaction(tx);
+    return res;
+  }
+
+  async attach(
+    owner: string,
+    tokenId: number,
+    parentId: number,
+    params: { sender: string }
+  ): Promise<Receipt> {
+    const tx = this.createTransaction({
+      method: { name: 'attach', args: [`'${owner}`, `${tokenId}`, `${parentId}`] },
+    });
+    await tx.sign(params.sender);
+    const res = await this.submitTransaction(tx);
+    return res;
+  }
+
+  async detach(owner: string, tokenId: number, params: { sender: string }): Promise<Receipt> {
+    const tx = this.createTransaction({
+      method: { name: 'detach', args: [`'${owner}`, `${tokenId}`] },
     });
     await tx.sign(params.sender);
     const res = await this.submitTransaction(tx);
