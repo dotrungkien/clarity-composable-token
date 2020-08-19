@@ -29,6 +29,22 @@ export class ComposableToken extends Client {
     return Result.unwrap(res) === 'true';
   }
 
+  async canAttach(actor: string, tokenId: number, parentId: number): Promise<boolean> {
+    const query = this.createQuery({
+      method: { name: 'can-attach', args: [`'${actor}`, `${tokenId}`, `${parentId}`] },
+    });
+    const res = await this.submitQuery(query);
+    return Result.unwrap(res) === 'true';
+  }
+
+  async canDetach(actor: string, tokenId: number): Promise<boolean> {
+    const query = this.createQuery({
+      method: { name: 'can-detach', args: [`'${actor}`, `${tokenId}`] },
+    });
+    const res = await this.submitQuery(query);
+    return Result.unwrap(res) === 'true';
+  }
+
   async isSpenderApproved(spender: string, tokenId: number): Promise<number> {
     const query = this.createQuery({
       method: { name: 'is-spender-approved', args: [`'${spender}`, `${tokenId}`] },

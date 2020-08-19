@@ -71,9 +71,16 @@
   )
 )
 
+;; only token owner or operator can attach token to parent
 (define-private (can-attach (actor principal) (token-id int) (parent-id int))
   (and
-    (can-transfer actor token-id)
+    (or
+      (is-owner actor token-id)
+      (is-operator-approved
+        actor
+        (unwrap! (nft-get-owner? composable-token token-id) false)
+      )
+    )
     (not (is-eq token-id parent-id))
     (is-eq
       0
@@ -89,9 +96,16 @@
   )
 )
 
+;; only token owner or operator can detach token from parent
 (define-private (can-detach (actor principal) (token-id int) )
   (and
-    (can-transfer actor token-id)
+    (or
+      (is-owner actor token-id)
+      (is-operator-approved
+        actor
+        (unwrap! (nft-get-owner? composable-token token-id) false)
+      )
+    )
     (>
       (unwrap! (get parent-id (map-get? parent-token {token-id: token-id})) false)
       0
@@ -265,12 +279,5 @@
 
 (define-public (transfer (recipient principal) (token-id int))
   (transfer-from tx-sender recipient token-id)
-)
-
-(begin
-  (mint-token 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7 1)
-  (mint-token 'SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7 2)
-  (mint-token 'SP1DQW1980HVS71XPSW91A8K2W2R3ZAJ75M5M0K5W 3)
-
 )
 
