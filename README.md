@@ -40,7 +40,7 @@ That is the motivation for creating a new type of token - a **composable-token**
 
 ## Test
 
-- Checkout [test-client](test/composable-token-client.test.ts) for more information about the client of the composable token, which wrapping all contract functions here, thus we can easily call query or invoke transaction.
+- Checkout [test-client](test/composable-token-client.ts) for more information about the client of the composable token, which wrapping all contract functions here, thus we can easily call query or invoke transaction.
 
 - Checkout [test-cases](test/composable-token.test.ts) for more information about test cases of the composable token.
 
