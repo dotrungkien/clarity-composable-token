@@ -24,6 +24,8 @@ One of the most interesting aspects of Cryptokitties was the breeding function. 
 
 ## Specification
 
+![tokens](tokens.png)
+
 - Composable token is a nft token, base on ERC721 token
 - Each token has it only parent, and can has many childs.
 - When attach token A to token B:
