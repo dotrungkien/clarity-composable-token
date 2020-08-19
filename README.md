@@ -26,7 +26,7 @@ One of the most interesting aspects of Cryptokitties was the breeding function. 
 
 - Composable token is a nft token, base on ERC721 token
 - Each token has it only parent, and can has many childs.
-- When attach token A, to token B:
+- When attach token A to token B:
   - token A != token B
   - token B parent must not equal to token A to avoid recursion attachment
   - token A and B both belongs to a same owner.
@@ -44,6 +44,10 @@ One of the most interesting aspects of Cryptokitties was the breeding function. 
 
 ## Test
 
--Checkout [test-client](test/composable-token-client.test.ts) for more information about the client of composable token, which wrap all contract functions here, thus we can easily to call query or invoke transaction.
+- Checkout [test-client](test/composable-token-client.test.ts) for more information about the client of composable token, which wrap all contract functions here, thus we can easily to call query or invoke transaction.
 
 - Checkout [test-cases](test/composable-token.test.ts) for more information about test cases of composable token.
+
+## License
+
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge)](https://github.com/dotrungkien/clarity-composable-token/blob/master/LICENSE)
