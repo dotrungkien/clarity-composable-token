@@ -6,12 +6,15 @@
 (define-map token-count ((owner principal)) ((count int)))
 (define-map account-operator ((operator principal) (account principal)) ((is-approved bool)))
 (define-map parent-token ((token-id int)) ((parent-id int)))
-(define-map child-tokens ((parent-id int)) ((child-ids (list 10 int))))
+(define-map child-tokens ((parent-id int)) ((child-ids (list 2 int))))
 
 ;; Variable
 (define-data-var token-ids (list 10 int) (list))
 
 ;; Constant
+(define-constant max-child-num 2)
+(define-constant max-child-depth 2)
+
 (define-constant same-spender-err (err u1))
 (define-constant not-approved-spender-err (err u2))
 (define-constant failed-to-move-token-err (err u3))
@@ -210,8 +213,8 @@
   )
 )
 
-(define-private (add-to (child-ids (list 10 int)) (token-id int))
-  (unwrap! (as-max-len? (append child-ids token-id) u10) child-ids)
+(define-private (add-to (child-ids (list 2 int)) (token-id int))
+  (unwrap! (as-max-len? (append child-ids token-id) u2) child-ids)
 )
 
 (define-public (attach (owner principal) (token-id int) (parent-id int))
@@ -220,7 +223,7 @@
       (can-attach tx-sender token-id parent-id)
       (is-owner owner token-id)
       (is-owner owner parent-id)
-      (< (len (childs-of parent-id)) u10)
+      (< (len (childs-of parent-id)) u2)
     )
     ;; attach
     (begin
