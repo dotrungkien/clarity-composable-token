@@ -28,8 +28,10 @@ export class ComposableToken extends Client {
     return Result.unwrap(res).replace(/'/g, '');
   }
 
-  async isOwner(actor: number): Promise<boolean> {
-    const query = this.createQuery({ method: { name: 'is-owner', args: [`'${actor}`] } });
+  async isOwner(actor: string, tokenId: number): Promise<boolean> {
+    const query = this.createQuery({
+      method: { name: 'is-owner', args: [`'${actor}`, `${tokenId}`] },
+    });
     const res = await this.submitQuery(query);
     return Result.unwrap(res) === 'true';
   }

@@ -9,6 +9,7 @@
 
 ;; Constant
 (define-constant max-child-depth 2)
+(define-constant contract-owner 'STCYMDQ2B7WPTN1NDQ1HAADCYS1RKWGQ5KF09E61)
 
 (define-constant same-spender-err (err u1))
 (define-constant not-approved-spender-err (err u2))
@@ -129,24 +130,24 @@
   (and
     (is-owner tx-sender token-id)
     (is-owner tx-sender parent-id)
-    (not (is-eq token-id parent-id))
-    (> 0 token-id)
-    (> 0 parent-id)
-    (is-eq 0 (parent-of token-id))
-    (not (is-eq token-id (parent-of parent-id)))
-    (< 2 (child-count-of parent-id))
-    (if (is-eq (parent-of parent-id) 0)
-      ;; parent has no parent, max token-id child depth is less than 2
-      (< max-child-depth (child-depth-of token-id))
-      ;; grandpa-id has no parent, max token-id child depth must be zero
-      (let ((grandpa-id (parent-of parent-id)))
-        (if (is-eq (parent-of grandpa-id) 0)
-          (is-eq 0 (child-depth-of token-id))
-          ;; false because parent-id is already max-depth-child of another token
-          false
-        )
-      )
-    )
+    ;;(not (is-eq token-id parent-id))
+    ;;(> 0 token-id)
+    ;;(> 0 parent-id)
+    ;;(is-eq 0 (parent-of token-id))
+    ;;(not (is-eq token-id (parent-of parent-id)))
+    ;;(< 2 (child-count-of parent-id))
+    ;;(if (is-eq (parent-of parent-id) 0)
+    ;;  ;; parent has no parent, max token-id child depth is less than 2
+    ;;  (< max-child-depth (child-depth-of token-id))
+    ;;  ;; grandpa-id has no parent, max token-id child depth must be zero
+    ;;  (let ((grandpa-id (parent-of parent-id)))
+    ;;    (if (is-eq (parent-of grandpa-id) 0)
+    ;;      (is-eq 0 (child-depth-of token-id))
+    ;;      ;; false because parent-id is already max-depth-child of another token
+    ;;      false
+    ;;    )
+    ;;  )
+    ;;)
   )
 )
 
@@ -275,20 +276,24 @@
 )
 
 ;; mint a new nft token for owner
+;; only contract owner can do this
 (define-public (mint-token (owner principal) (token-id int))
-  (if (is-eq token-id 0)
-    zero-id-err
-    (let
-      ((current-balance (balance-of owner)))
-      (begin
-        (nft-mint? composable-token token-id owner)
-        (map-set token-count
-          {owner: owner}
-          {count: (+ 1 current-balance)}
+  (if (is-eq tx-sender contract-owner)
+    (if (is-eq token-id 0)
+      zero-id-err
+      (let
+        ((current-balance (balance-of owner)))
+        (begin
+          (nft-mint? composable-token token-id owner)
+          (map-set token-count
+            {owner: owner}
+            {count: (+ 1 current-balance)}
+          )
+          (ok true)
         )
-        (ok true)
       )
     )
+    failed-to-mint-err
   )
 )
 
@@ -348,8 +353,6 @@
     failed-to-detach-err
   )
 )
-
-
 
 (define-public (transfer (new-owner principal) (token-id int))
   (begin

@@ -1,7 +1,6 @@
 import { Provider, ProviderRegistry, Receipt } from '@blockstack/clarity';
 import { ComposableToken } from './composable-token-client';
 import { expect } from 'chai';
-import { isClassOrTypeElement } from 'typescript';
 
 describe('ComposableToken Test Suite', () => {
   let instance: ComposableToken;
@@ -15,12 +14,9 @@ describe('ComposableToken Test Suite', () => {
     'SP3DWF717EZRH2M4S16TZDVNZPWT7DG95ZK5YAS69',
   ];
 
-  const alice = addresses[0];
-  const bob = addresses[1];
-  const zoe = addresses[2];
-  const yann = addresses[3];
-  const han = addresses[4];
-  const contractOwner = 'STCYMDQ2B7WPTN1NDQ1HAADCYS1RKWGQ5KF09E61';
+  const u1 = addresses[0];
+  const u2 = addresses[1];
+  const deployer = 'STCYMDQ2B7WPTN1NDQ1HAADCYS1RKWGQ5KF09E61';
 
   before(async () => {
     provider = await ProviderRegistry.createProvider();
@@ -32,390 +28,86 @@ describe('ComposableToken Test Suite', () => {
     await instance.deployContract();
   });
 
-  describe('Deploying an instance of the contract', () => {
+  describe('mint some token for u1', () => {
     before(async () => {
-      await instance.mintToken(alice, 1, { sender: contractOwner });
-      await instance.mintToken(alice, 2, { sender: contractOwner });
-      await instance.mintToken(bob, 3, { sender: contractOwner });
+      await instance.mintToken(u1, 1, { sender: deployer });
+      await instance.mintToken(u1, 2, { sender: deployer });
+      await instance.mintToken(u1, 3, { sender: deployer });
+      await instance.mintToken(u1, 4, { sender: deployer });
+      await instance.mintToken(u1, 5, { sender: deployer });
+      await instance.mintToken(u1, 6, { sender: deployer });
     });
 
-    it("should initialize Alice's balance (2 token)", async () => {
-      const balanceAlice = await instance.balanceOf(alice);
-      expect(balanceAlice).equal(2);
+    it('u1 balance should be 6', async () => {
+      const balance = await instance.balanceOf(u1);
+      expect(balance).equal(6);
     });
 
-    it("should initialize Bob's balance (1 token)", async () => {
-      const balanceBob = await instance.balanceOf(bob);
-      expect(balanceBob).equal(1);
+    it('u2 balance should be zero', async () => {
+      const balance = await instance.balanceOf(u2);
+      expect(balance).equal(0);
     });
 
-    it('should make Alice owner of token #1', async () => {
-      const owner1 = await instance.ownerOf(1);
-      expect(owner1).equal(`(ok (some ${alice}))`);
+    it('should make u1 owner of token #1', async () => {
+      const owner = await instance.ownerOf(1);
+      expect(owner).equal(`(ok (some ${u1}))`);
     });
-
-    it('should make Alice owner of token #2', async () => {
-      const owner2 = await instance.ownerOf(2);
-      expect(owner2).equal(`(ok (some ${alice}))`);
+    it('should make u1 owner of token #2', async () => {
+      const owner = await instance.ownerOf(2);
+      expect(owner).equal(`(ok (some ${u1}))`);
     });
-
-    it('should make Bob owner of token #3', async () => {
-      const owner3 = await instance.ownerOf(3);
-      expect(owner3).equal(`(ok (some ${bob}))`);
+    it('should make u1 owner of token #3', async () => {
+      const owner = await instance.ownerOf(3);
+      expect(owner).equal(`(ok (some ${u1}))`);
+    });
+    it('should make u1 owner of token #4', async () => {
+      const owner = await instance.ownerOf(4);
+      expect(owner).equal(`(ok (some ${u1}))`);
+    });
+    it('should make u1 owner of token #5', async () => {
+      const owner = await instance.ownerOf(5);
+      expect(owner).equal(`(ok (some ${u1}))`);
+    });
+    it('should make u1 owner of token #6', async () => {
+      const owner1 = await instance.ownerOf(6);
+      expect(owner1).equal(`(ok (some ${u1}))`);
     });
   });
 
-  describe('Alice transfering token #1 to Bob', () => {
-    before(async () => {
-      await instance.transfer(bob, 1, { sender: alice });
-    });
-
-    it("should decrease Alice's balance (1 token)", async () => {
-      const balanceAlice = await instance.balanceOf(alice);
-      expect(balanceAlice).equal(1);
-    });
-
-    it("should increase Bob's balance (2 tokens)", async () => {
-      const balanceBob = await instance.balanceOf(bob);
-      expect(balanceBob).equal(2);
-    });
-
-    it('should make Bob owner of token #1', async () => {
-      const owner1 = await instance.ownerOf(1);
-      expect(owner1).equal(`(ok (some ${bob}))`);
-    });
-  });
-
-  describe('Alice transfering an token that she does NOT own to Yann', () => {
-    let receipt: Receipt;
-
-    before(async () => {
-      receipt = await instance.transfer(bob, 3, { sender: alice });
-    });
-
-    it('should return an invalid receipt', async () => {
-      expect(receipt.success).false;
-    });
-
-    it("should not increase Yann's balance (0 tokens)", async () => {
-      const balanceYann = await instance.balanceOf(yann);
-      expect(balanceYann).equal(0);
-    });
-
-    it("should not decrease Bob's balance (2 tokens)", async () => {
-      const balanceBob = await instance.balanceOf(bob);
-      expect(balanceBob).equal(2);
-    });
-  });
-
-  describe('Alice transfering an token that she owns to herself', () => {
-    let receipt: Receipt;
-
-    before(async () => {
-      receipt = await instance.transfer(alice, 2, { sender: alice });
-    });
-
-    it('should return an invalid receipt', async () => {
-      expect(receipt.success).false;
-    });
-
-    it("should not increase Yann's balance (0 tokens)", async () => {
-      const balanceAlice = await instance.balanceOf(alice);
-      expect(balanceAlice).equal(1);
-    });
-
-    it("should not decrease Bob's balance (2 tokens)", async () => {
-      const balanceBob = await instance.balanceOf(bob);
-      expect(balanceBob).equal(2);
-    });
-  });
-
-  describe('Alice transfering an token that she does NOT own to herself', () => {
-    let receipt: Receipt;
-
-    before(async () => {
-      receipt = await instance.transfer(alice, 3, { sender: alice });
-    });
-
-    it('should return an invalid receipt', async () => {
-      expect(receipt.success).false;
-    });
-
-    it("should not increase Alice's balance (1 tokens)", async () => {
-      const balanceAlice = await instance.balanceOf(alice);
-      expect(balanceAlice).equal(1);
-    });
-
-    it("should not decrease Bob's balance (2 tokens)", async () => {
-      const balanceBob = await instance.balanceOf(bob);
-      expect(balanceBob).equal(2);
-    });
-  });
-
-  describe('Bob approving Zoe to trade the token #3 on his behalf', () => {
-    before(async () => {
-      await instance.setSpenderApproval(zoe, 3, { sender: bob });
-    });
-
-    it('should make Zoe able to transfer token #3', async () => {
-      const allowanceZoe = await instance.canTransfer(zoe, 3);
-      expect(allowanceZoe).true;
-    });
-
-    it('should NOT make Zoe able to transfer token #1', async () => {
-      const allowanceZoe = await instance.canTransfer(zoe, 1);
-      expect(allowanceZoe).false;
-    });
-
-    describe('Zoe transfering token #3 from Alice to Bob', () => {
-      let receipt: Receipt;
-
-      before(async () => {
-        receipt = await instance.transferFrom(alice, bob, 3, { sender: zoe });
+  describe('u1 attach token #1 to token #2', () => {
+    describe('check attach pre-condition', () => {
+      it('token #1 has no parent', async () => {
+        const parent = await instance.parentOf(1);
+        expect(parent).null;
       });
-
-      it('should return an invalid receipt', async () => {
-        expect(receipt.success).false;
+      it('u1 is owner of token #1', async () => {
+        const isOwner = await instance.isOwner(u1, 1);
+        expect(isOwner).true;
       });
-
-      it("should not increase Alice's balance (1 tokens)", async () => {
-        const balanceAlice = await instance.balanceOf(alice);
-        expect(balanceAlice).equal(1);
+      it('token #2 has no child', async () => {
+        const childCount = await instance.childCountOf(2);
+        expect(childCount).equal(0);
       });
-
-      it("should not decrease Bob's balance (2 tokens)", async () => {
-        const balanceBob = await instance.balanceOf(bob);
-        expect(balanceBob).equal(2);
+      it('token #2 has no parent', async () => {
+        const parent = await instance.parentOf(2);
+        expect(parent).null;
+      });
+      it('can attach token #1 to token #2', async () => {
+        const canAttach = await instance.canAttach(1, 2);
+        expect(canAttach).true;
       });
     });
 
-    describe('Zoe transfering token #3 to Alice on Bob behalf', () => {
-      before(async () => {
-        await instance.transferFrom(bob, alice, 3, { sender: zoe });
-      });
+    // describe('attach token #1 to token #2', () => {
+    //   before(async () => {
+    //     await instance.attach(1, 2, { sender: u1 });
+    //   });
 
-      it("should increase Alice's balance (2 token)", async () => {
-        const balanceAlice = await instance.balanceOf(alice);
-        expect(balanceAlice).equal(2);
-      });
-
-      it("should decrease Bob's balance (1 token)", async () => {
-        const balanceBob = await instance.balanceOf(bob);
-        expect(balanceBob).equal(1);
-      });
-
-      it('should make Alice owner of token #2', async () => {
-        const owner2 = await instance.ownerOf(2);
-        expect(owner2).equal(`(ok (some ${alice}))`);
-      });
-
-      it("should revoke Zoe's ability to trade token #2", async () => {
-        const allowanceZoe = await instance.canTransfer(zoe, 2);
-        expect(allowanceZoe).false;
-      });
-    });
-  });
-
-  describe('Alice approving Yann as an operator', () => {
-    before(async () => {
-      await instance.setOperatorApproval(yann, true, { sender: alice });
-    });
-
-    it('should NOT make Yann able to transfer token #1', async () => {
-      const allowanceYann = await instance.canTransfer(yann, 1);
-      expect(allowanceYann).false;
-    });
-
-    it('should make Yann able to transfer token #2', async () => {
-      const allowanceYann = await instance.canTransfer(yann, 2);
-      expect(allowanceYann).true;
-    });
-
-    it('should make Yann able to transfer token #3', async () => {
-      const allowanceYann = await instance.canTransfer(yann, 3);
-      expect(allowanceYann).true;
-    });
-
-    describe('Yann transfering token #1 from Alice to Bob', () => {
-      let receipt: Receipt;
-
-      before(async () => {
-        receipt = await instance.transferFrom(alice, bob, 1, { sender: yann });
-      });
-
-      it('should return an invalid receipt', async () => {
-        expect(receipt.success).false;
-      });
-
-      it("should not increase Alice's balance (2 tokens)", async () => {
-        const balanceAlice = await instance.balanceOf(alice);
-        expect(balanceAlice).equal(2);
-      });
-
-      it("should not decrease Bob's balance (1 tokens)", async () => {
-        const balanceBob = await instance.balanceOf(bob);
-        expect(balanceBob).equal(1);
-      });
-    });
-
-    describe('Yann transfering token #2 from Bob to Alice', () => {
-      let receipt: Receipt;
-
-      before(async () => {
-        receipt = await instance.transferFrom(bob, alice, 2, { sender: yann });
-      });
-
-      it('should return an invalid receipt', async () => {
-        expect(receipt.success).false;
-      });
-
-      it("should not increase Alice's balance (2 tokens)", async () => {
-        const balanceAlice = await instance.balanceOf(alice);
-        expect(balanceAlice).equal(2);
-      });
-
-      it("should not decrease Bob's balance (1 tokens)", async () => {
-        const balanceBob = await instance.balanceOf(bob);
-        expect(balanceBob).equal(1);
-      });
-    });
-
-    describe('Yann transfering token #2 from Alice to Bob', () => {
-      let receipt: Receipt;
-
-      before(async () => {
-        receipt = await instance.transferFrom(alice, bob, 2, { sender: yann });
-      });
-
-      it('should return an valid receipt', async () => {
-        expect(receipt.success).true;
-      });
-
-      it("should increase Alice's balance (1 tokens)", async () => {
-        const balanceAlice = await instance.balanceOf(alice);
-        expect(balanceAlice).equal(1);
-      });
-
-      it("should decrease Bob's balance (2 tokens)", async () => {
-        const balanceBob = await instance.balanceOf(bob);
-        expect(balanceBob).equal(2);
-      });
-
-      it('should make Bob owner of token #2', async () => {
-        const owner2 = await instance.ownerOf(2);
-        expect(owner2).equal(`(ok (some ${bob}))`);
-      });
-
-      it("should revoke Yann's ability to trade token #2", async () => {
-        const allowanceYann = await instance.canTransfer(yann, 2);
-        expect(allowanceYann).false;
-      });
-    });
-
-    describe('Alice revoking Yann as an operator', () => {
-      before(async () => {
-        await instance.setOperatorApproval(yann, false, { sender: alice });
-      });
-
-      it("should revoke Yann's ability to trade token #3", async () => {
-        const allowanceYann = await instance.canTransfer(yann, 3);
-        expect(allowanceYann).false;
-      });
-    });
-  });
-
-  describe('Alice attach token', () => {
-    before(async () => {
-      await instance.mintToken(alice, 4, { sender: contractOwner });
-      await instance.mintToken(alice, 5, { sender: contractOwner });
-    });
-
-    it('Alice is able to attach token #4 to #5', async () => {
-      const canAttach = await instance.canAttach(alice, 4, 5);
-      expect(canAttach).true;
-    });
-
-    it('parent of token #4 is null before attach', async () => {
-      const parentId = await instance.parentOf(4);
-      expect(parentId).null;
-    });
-
-    it('childs of token #5 is [] before attach', async () => {
-      const childs = await instance.childsOf(5);
-      expect(childs.length).equal(0);
-    });
-
-    describe('Alice attach token #4 to #5', () => {
-      before(async () => {
-        await instance.attach(alice, 4, 5, { sender: alice });
-      });
-
-      it('parent of token #4 now is token #5', async () => {
-        const parentId = await instance.parentOf(4);
-        expect(parentId).equal(5);
-      });
-
-      it('token #4 now is one of childs of token #5', async () => {
-        const childs = await instance.childsOf(5);
-        expect(childs).includes(4);
-      });
-    });
-  });
-
-  describe('Alice approving Han as an operator', () => {
-    before(async () => {
-      await instance.mintToken(alice, 6, { sender: contractOwner });
-      await instance.mintToken(alice, 7, { sender: contractOwner });
-      await instance.setOperatorApproval(han, true, { sender: alice });
-    });
-    it('should make Han able to attach token #6 to #7', async () => {
-      const canAttach = await instance.canAttach(han, 6, 7);
-      expect(canAttach).true;
-    });
-
-    it('parent of token #6 is null before attach', async () => {
-      const parentId = await instance.parentOf(6);
-      expect(parentId).null;
-    });
-
-    it('childs of token #7 is [] before attach', async () => {
-      const childs = await instance.childsOf(7);
-      expect(childs.length).equal(0);
-    });
-
-    describe('Han attach token #6 to #7', () => {
-      before(async () => {
-        await instance.attach(alice, 6, 7, { sender: han });
-      });
-
-      it('parent of token #6 now is token #7', async () => {
-        const parentId = await instance.parentOf(6);
-        expect(parentId).equal(7);
-      });
-
-      it('token #6 now is one of childs of token #7', async () => {
-        const childs = await instance.childsOf(7);
-        expect(childs).includes(6);
-      });
-    });
-  });
-
-  describe('Alice detach token', () => {
-    it('Alice is able to dettach token #4 from #5', async () => {
-      const canAttach = await instance.canDetach(alice, 4);
-      expect(canAttach).true;
-    });
-
-    describe('Alice detach token #4 from #5', () => {
-      before(async () => {
-        await instance.detach(alice, 4, { sender: alice });
-      });
-
-      it('parent of token #4 is null after dettach', async () => {
-        const parentId = await instance.parentOf(4);
-        expect(parentId).null;
-      });
-    });
+    //   it('token #1 parent is token #2', async () => {
+    //     const parent = await instance.parentOf(1);
+    //     expect(parent).equal(2);
+    //   });
+    // });
   });
 
   after(async () => {
