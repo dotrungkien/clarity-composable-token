@@ -37,6 +37,13 @@
   )
 )
 
+(define-private (is-owner (actor principal) (token-id int))
+  (is-eq
+    (unwrap! (nft-get-owner? composable-token token-id) false)
+    actor
+  )
+)
+
 (define-private (child-count-of (token-id int))
   (default-to 0
     (get count
@@ -61,29 +68,30 @@
   )
 )
 
-(define-private (is-owner (actor principal) (token-id int))
-  (is-eq
-    (unwrap! (nft-get-owner? composable-token token-id) false)
-    actor
-  )
-)
-
-(define-private (can-transfer (actor principal) (token-id int))
-  (is-owner actor token-id)
-)
-
 (define-private (child-depth-of (token-id int))
   (if (is-eq (child-count-of token-id) 0)
     ;; zero child, child-depth = 0
     0
     (if (is-eq (child-count-of token-id) 1)
-      ;; has only lef-child
-      (let ((left-child (left-child-of token-id)))
-        (if (is-eq (child-count-of left-child) 0)
-          ;; left-child has no child, child-depth = 1
-          1
-          ;; lef-child has some childs, child-depth = 2
-          2
+      (if (not (is-eq (left-child-of token-id) 0))
+        ;; has only left-child
+        (let ((left-child (left-child-of token-id)))
+          (if (is-eq (child-count-of left-child) 0)
+            ;; left-child has no child, child-depth = 1
+            1
+            ;; lef-child has some childs, child-depth = 2
+            2
+          )
+        )
+
+        ;; has only right-child
+        (let ((right-child (right-child-of token-id)))
+          (if (is-eq (child-count-of right-child) 0)
+            ;; right-child has no child, child-depth = 1
+            1
+            ;; right-child has some childs, child-depth = 2
+            2
+          )
         )
       )
       ;; has both left and right child
@@ -106,6 +114,9 @@
   )
 )
 
+(define-private (can-transfer (actor principal) (token-id int))
+  (is-owner actor token-id)
+)
 
 ;; both token-id and parent-id must belong to the same user
 ;; parent-id must not be the same with token-id
@@ -288,7 +299,7 @@
 
 ;; count all child by depth
 (define-public (get-all-child-by-depth-of (token-id int))
-  (ok child-depth-count-of token-id)
+  (ok (child-depth-count-of token-id))
 )
 
 
@@ -381,6 +392,7 @@
           {owner: new-owner}
           {count: (+ (balance-of tx-sender) total-transfer-count)}
         )
+        (ok true)
       )
     )
   )

@@ -22,20 +22,40 @@ export class ComposableToken extends Client {
     return parentId ? parentId : null;
   }
 
-  async childsOf(parentId: number): Promise<any> {
-    const query = this.createQuery({ method: { name: 'childs-of', args: [`${parentId}`] } });
-    const res = await this.submitQuery(query);
-    const result = res.result;
-    let childsString = result.slice(1, result.length - 1);
-    if (childsString === '') return [];
-    let childs = childsString.split(' ').map(i => parseInt(i));
-    return childs;
-  }
-
   async ownerOf(tokenId: number): Promise<string> {
     const query = this.createQuery({ method: { name: 'owner-of?', args: [`${tokenId}`] } });
     const res = await this.submitQuery(query);
     return Result.unwrap(res).replace(/'/g, '');
+  }
+
+  async isOwner(actor: number): Promise<boolean> {
+    const query = this.createQuery({ method: { name: 'is-owner', args: [`'${actor}`] } });
+    const res = await this.submitQuery(query);
+    return Result.unwrap(res) === 'true';
+  }
+
+  async childCountOf(tokenId: number): Promise<number> {
+    const query = this.createQuery({ method: { name: 'child-count-of', args: [`${tokenId}`] } });
+    const res = await this.submitQuery(query);
+    return parseInt(res.result as string);
+  }
+
+  async leftChildOf(tokenId: number): Promise<number> {
+    const query = this.createQuery({ method: { name: 'left-child-of', args: [`${tokenId}`] } });
+    const res = await this.submitQuery(query);
+    return parseInt(res.result as string);
+  }
+
+  async rightChildOf(tokenId: number): Promise<number> {
+    const query = this.createQuery({ method: { name: 'right-child-of', args: [`${tokenId}`] } });
+    const res = await this.submitQuery(query);
+    return parseInt(res.result as string);
+  }
+
+  async childDepthOf(tokenId: number): Promise<number> {
+    const query = this.createQuery({ method: { name: 'right-child-of', args: [`${tokenId}`] } });
+    const res = await this.submitQuery(query);
+    return parseInt(res.result as string);
   }
 
   async canTransfer(actor: string, tokenId: number): Promise<boolean> {
@@ -46,17 +66,17 @@ export class ComposableToken extends Client {
     return Result.unwrap(res) === 'true';
   }
 
-  async canAttach(actor: string, tokenId: number, parentId: number): Promise<boolean> {
+  async canAttach(tokenId: number, parentId: number): Promise<boolean> {
     const query = this.createQuery({
-      method: { name: 'can-attach', args: [`'${actor}`, `${tokenId}`, `${parentId}`] },
+      method: { name: 'can-attach', args: [`${tokenId}`, `${parentId}`] },
     });
     const res = await this.submitQuery(query);
     return Result.unwrap(res) === 'true';
   }
 
-  async canDetach(actor: string, tokenId: number): Promise<boolean> {
+  async canDetach(tokenId: number): Promise<boolean> {
     const query = this.createQuery({
-      method: { name: 'can-detach', args: [`'${actor}`, `${tokenId}`] },
+      method: { name: 'can-detach', args: [`${tokenId}`] },
     });
     const res = await this.submitQuery(query);
     return Result.unwrap(res) === 'true';
