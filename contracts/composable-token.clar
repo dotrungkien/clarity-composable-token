@@ -159,34 +159,6 @@
   )
 )
 
-;; mint a new nft token for owner
-(define-public (mint-token (owner principal) (token-id int))
-  (if (is-eq token-id 0)
-    zero-id-err
-    (let
-      ((current-balance (balance-of owner)))
-      (begin
-        (nft-mint? composable-token token-id owner)
-        (map-set token-count
-          {owner: owner}
-          {count: (+ 1 current-balance)}
-        )
-        (ok true)
-      )
-    )
-  )
-)
-
-(define-private (release-token (owner principal) (token-id int))
-  (begin
-    (map-set token-count
-      {owner: owner}
-      {count: (- (balance-of owner) 1)}
-    )
-    true
-  )
-)
-
 (define-private (attach-to-left-child (token-id int) (parent-id int) )
   (map-set child-token
     {parent-id: parent-id}
@@ -302,8 +274,25 @@
   (ok (child-depth-count-of token-id))
 )
 
+;; mint a new nft token for owner
+(define-public (mint-token (owner principal) (token-id int))
+  (if (is-eq token-id 0)
+    zero-id-err
+    (let
+      ((current-balance (balance-of owner)))
+      (begin
+        (nft-mint? composable-token token-id owner)
+        (map-set token-count
+          {owner: owner}
+          {count: (+ 1 current-balance)}
+        )
+        (ok true)
+      )
+    )
+  )
+)
 
-;; attack token-id to parent-id
+;; attach token-id to parent-id
 (define-public (attach (token-id int) (parent-id int))
   (if (can-attach token-id parent-id)
     (begin

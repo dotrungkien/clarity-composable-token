@@ -40,6 +40,14 @@ export class ComposableToken extends Client {
     return parseInt(res.result as string);
   }
 
+  async allChildByDepthOf(tokenId: number): Promise<number> {
+    const query = this.createQuery({
+      method: { name: 'get-all-child-by-depth-of', args: [`${tokenId}`] },
+    });
+    const res = await this.submitQuery(query);
+    return parseInt(res.result as string);
+  }
+
   async leftChildOf(tokenId: number): Promise<number> {
     const query = this.createQuery({ method: { name: 'left-child-of', args: [`${tokenId}`] } });
     const res = await this.submitQuery(query);
@@ -53,7 +61,7 @@ export class ComposableToken extends Client {
   }
 
   async childDepthOf(tokenId: number): Promise<number> {
-    const query = this.createQuery({ method: { name: 'right-child-of', args: [`${tokenId}`] } });
+    const query = this.createQuery({ method: { name: 'child-depth-of', args: [`${tokenId}`] } });
     const res = await this.submitQuery(query);
     return parseInt(res.result as string);
   }
@@ -82,56 +90,27 @@ export class ComposableToken extends Client {
     return Result.unwrap(res) === 'true';
   }
 
-  async isSpenderApproved(spender: string, tokenId: number): Promise<number> {
-    const query = this.createQuery({
-      method: { name: 'is-spender-approved', args: [`'${spender}`, `${tokenId}`] },
-    });
-    const res = await this.submitQuery(query);
-    return parseInt(Result.unwrap(res));
-  }
-
-  async isOperatorApproved(owner: string, operator: string): Promise<number> {
-    const query = this.createQuery({
-      method: { name: 'is-operator-approved', args: [`'${owner}`, `'${operator}`] },
-    });
-    const res = await this.submitQuery(query);
-    return parseInt(Result.unwrap(res));
-  }
-
-  async setSpenderApproval(
-    spender: string,
-    tokenId: number,
-    params: { sender: string }
-  ): Promise<Receipt> {
+  async mintToken(owner: string, tokenId: number, params: { sender: string }): Promise<Receipt> {
     const tx = this.createTransaction({
-      method: { name: 'set-spender-approval', args: [`'${spender}`, `${tokenId}`] },
+      method: { name: 'mint-token', args: [`'${owner}`, `${tokenId}`] },
     });
     await tx.sign(params.sender);
     const res = await this.submitTransaction(tx);
     return res;
   }
 
-  async setOperatorApproval(
-    operator: string,
-    isApproved: boolean,
-    params: { sender: string }
-  ): Promise<Receipt> {
+  async attach(tokenId: number, parentId: number, params: { sender: string }): Promise<Receipt> {
     const tx = this.createTransaction({
-      method: { name: 'set-operator-approval', args: [`'${operator}`, `${isApproved}`] },
+      method: { name: 'attach', args: [`${tokenId}`, `${parentId}`] },
     });
     await tx.sign(params.sender);
     const res = await this.submitTransaction(tx);
     return res;
   }
 
-  async transferFrom(
-    from: string,
-    to: string,
-    tokenId: number,
-    params: { sender: string }
-  ): Promise<Receipt> {
+  async detach(tokenId: number, params: { sender: string }): Promise<Receipt> {
     const tx = this.createTransaction({
-      method: { name: 'transfer-from', args: [`'${from}`, `'${to}`, `${tokenId}`] },
+      method: { name: 'detach', args: [`${tokenId}`] },
     });
     await tx.sign(params.sender);
     const res = await this.submitTransaction(tx);
@@ -141,38 +120,6 @@ export class ComposableToken extends Client {
   async transfer(to: string, tokenId: number, params: { sender: string }): Promise<Receipt> {
     const tx = this.createTransaction({
       method: { name: 'transfer', args: [`'${to}`, `${tokenId}`] },
-    });
-    await tx.sign(params.sender);
-    const res = await this.submitTransaction(tx);
-    return res;
-  }
-
-  async attach(
-    owner: string,
-    tokenId: number,
-    parentId: number,
-    params: { sender: string }
-  ): Promise<Receipt> {
-    const tx = this.createTransaction({
-      method: { name: 'attach', args: [`'${owner}`, `${tokenId}`, `${parentId}`] },
-    });
-    await tx.sign(params.sender);
-    const res = await this.submitTransaction(tx);
-    return res;
-  }
-
-  async detach(owner: string, tokenId: number, params: { sender: string }): Promise<Receipt> {
-    const tx = this.createTransaction({
-      method: { name: 'detach', args: [`'${owner}`, `${tokenId}`] },
-    });
-    await tx.sign(params.sender);
-    const res = await this.submitTransaction(tx);
-    return res;
-  }
-
-  async mintToken(owner: string, tokenId: number, params: { sender: string }): Promise<Receipt> {
-    const tx = this.createTransaction({
-      method: { name: 'mint-token', args: [`'${owner}`, `${tokenId}`] },
     });
     await tx.sign(params.sender);
     const res = await this.submitTransaction(tx);

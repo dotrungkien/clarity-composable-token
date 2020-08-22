@@ -81,7 +81,7 @@
 - detach token #4 from token #2
   - not success because token #4 and token #2 is no longer belongs to U1
 
-## acion by user U2
+## action by user U2
 
 - attach new token #6 to token #2
 
