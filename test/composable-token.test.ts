@@ -93,7 +93,7 @@ describe('ComposableToken Test Suite', () => {
         expect(parent).null;
       });
       it('can attach token #1 to token #2', async () => {
-        const canAttach = await instance.canAttach(1, 2);
+        const canAttach = await instance.canAttach(u1, 1, 2);
         expect(canAttach).true;
       });
     });

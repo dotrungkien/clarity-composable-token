@@ -126,28 +126,28 @@
 ;; parent-id must greate than 0
 ;; parent-id has less than 2 child (max child)
 ;; total depth is less or equal than 2 (max-child-depth), detail bellow
-(define-private (can-attach (token-id int) (parent-id int))
+(define-private (can-attach (actor principal) (token-id int) (parent-id int))
   (and
-    (is-owner tx-sender token-id)
-    (is-owner tx-sender parent-id)
-    ;;(not (is-eq token-id parent-id))
-    ;;(> 0 token-id)
-    ;;(> 0 parent-id)
-    ;;(is-eq 0 (parent-of token-id))
-    ;;(not (is-eq token-id (parent-of parent-id)))
-    ;;(< 2 (child-count-of parent-id))
-    ;;(if (is-eq (parent-of parent-id) 0)
-    ;;  ;; parent has no parent, max token-id child depth is less than 2
-    ;;  (< max-child-depth (child-depth-of token-id))
-    ;;  ;; grandpa-id has no parent, max token-id child depth must be zero
-    ;;  (let ((grandpa-id (parent-of parent-id)))
-    ;;    (if (is-eq (parent-of grandpa-id) 0)
-    ;;      (is-eq 0 (child-depth-of token-id))
-    ;;      ;; false because parent-id is already max-depth-child of another token
-    ;;      false
-    ;;    )
-    ;;  )
-    ;;)
+    (is-owner actor token-id)
+    (is-owner actor parent-id)
+    (not (is-eq token-id parent-id))
+    (> token-id 0)
+    (> parent-id 0)
+    (is-eq 0 (parent-of token-id))
+    (not (is-eq token-id (parent-of parent-id)))
+    (< (child-count-of parent-id) 2)
+    (if (is-eq (parent-of parent-id) 0)
+      ;; parent has no parent, max token-id child depth is less than 2
+      (< (child-depth-of token-id) max-child-depth)
+      ;; grandpa-id has no parent, max token-id child depth must be zero
+      (let ((grandpa-id (parent-of parent-id)))
+        (if (is-eq (parent-of grandpa-id) 0)
+          (is-eq 0 (child-depth-of token-id))
+          ;; false because parent-id is already max-depth-child of another token
+          false
+        )
+      )
+    )
   )
 )
 
@@ -299,7 +299,7 @@
 
 ;; attach token-id to parent-id
 (define-public (attach (token-id int) (parent-id int))
-  (if (can-attach token-id parent-id)
+  (if (can-attach tx-sender token-id parent-id)
     (begin
 
       ;; update parent for token-id

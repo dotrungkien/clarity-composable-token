@@ -76,9 +76,9 @@ export class ComposableToken extends Client {
     return Result.unwrap(res) === 'true';
   }
 
-  async canAttach(tokenId: number, parentId: number): Promise<boolean> {
+  async canAttach(sender: string, tokenId: number, parentId: number): Promise<boolean> {
     const query = this.createQuery({
-      method: { name: 'can-attach', args: [`${tokenId}`, `${parentId}`] },
+      method: { name: 'can-attach', args: [`'${sender}`, `${tokenId}`, `${parentId}`] },
     });
     const res = await this.submitQuery(query);
     return Result.unwrap(res) === 'true';
