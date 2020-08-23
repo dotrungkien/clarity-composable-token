@@ -23,15 +23,15 @@ That is the motivation for creating a new type of token - a **composable-token**
 - The Composable Token is a nft token, based on ERC721 token.
 - Each token can have only one parent, and can have many childs.
 - When attaching token A to token B:
-  - token A != token B
-  - token B parent must different than token A to avoid recursion attachment.
+  - token A must be different than token B
+  - parent of token B must be different than token A to avoid recursion attachment.
   - token A and B both belong to the same owner.
   - update parent for token A, and childs for token B.
 - When detaching token A from token B
   - token A must be attaching on token B.
   - update parent for token A, and childs for token B.
 - When transfering token A to new owner
-  - all attach token will be transfered, too.
+  - all attached token will be transfered, too.
   - update the token count for sender and receipent.
 
 ## Implementation
@@ -40,7 +40,7 @@ That is the motivation for creating a new type of token - a **composable-token**
 
 ## Test
 
-- Checkout [test-cases](test/testcase.md) detail test cases of the composable token.
+- Checkout [test-cases](test/testcase.md) for detail test cases of the composable token.
 
 - Checkout [test-client](test/composable-token-client.ts) for more information about the client of the composable token, which wrapping all contract functions here, thus we can easily call query or invoke transaction.
 
