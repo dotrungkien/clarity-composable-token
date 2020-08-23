@@ -26,13 +26,13 @@ That is the motivation for creating a new type of token - a **composable-token**
   - token A != token B
   - token B parent must different than token A to avoid recursion attachment.
   - token A and B both belong to the same owner.
-  - operator account also has permission to attach and detach token.
-  - the actor of attaching action must be the token owner or token owner's operator account.
   - update parent for token A, and childs for token B.
 - When detaching token A from token B
   - token A must be attaching on token B.
-  - the actor of attaching action must be the token owner or token owner's operator account.
   - update parent for token A, and childs for token B.
+- When transfering token A to new owner
+  - all attach token will be transfered, too.
+  - update the token count for sender and receipent.
 
 ## Implementation
 
