@@ -55,6 +55,10 @@
 
   - not success because max child depth is 2, current relation is #3 -> #2 -> #1
 
+- attach token #5 to token #2
+
+  - not success because token #2 has max child
+
 - detach token #1 from token #2
 
   ![5](imgs/5.png)
@@ -63,10 +67,7 @@
   - token #2 has 1 child
   - left child of token #2 is none
   - right child of token #2 is #4
-  - token #1 has 0 child
-  - token #1 child depth is none
-  - token #2 child depth is 1
-  - token #3 child depth is 2
+  - token #3 total depth child is 3
 
 - transfer token #3 to new user U2
 
@@ -83,17 +84,17 @@
 
 ## action by user U2
 
-- attach new token #6 to token #2
+- attach new token #5 to token #2
 
   ![7](imgs/7.png)
 
-  - token #6 is children of token #2
-  - token #2 is parent of token #6
-  - token #6 has 0 child
+  - token #5 is children of token #2
+  - token #2 is parent of token #5
+  - token #5 has 0 child
   - token #2 has 2 child
   - left child of token #2 is #5
   - right child of token #2 is #4
-  - token #6 child depth is 0
+  - token #5 child depth is 0
   - token #2 child depth is 1
   - token #3 child depth count is 3
 

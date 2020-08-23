@@ -271,7 +271,7 @@
 )
 
 ;; count all child by depth
-(define-public (get-all-child-by-depth-of (token-id int))
+(define-public (all-child-by-depth-of (token-id int))
   (ok (child-depth-count-of token-id))
 )
 
@@ -372,7 +372,7 @@
     (nft-transfer? composable-token token-id tx-sender new-owner)
 
     ;; update token count
-    (let ((total-transfer-count (child-depth-count-of token-id)))
+    (let ((total-transfer-count (+ (child-depth-count-of token-id) 1)))
       (begin
         ;; update token count of tx-sender
         (map-set token-count
@@ -382,7 +382,7 @@
         ;; update token count of new-owner
         (map-set token-count
           {owner: new-owner}
-          {count: (+ (balance-of tx-sender) total-transfer-count)}
+          {count: (+ (balance-of new-owner) total-transfer-count)}
         )
         (ok true)
       )

@@ -44,22 +44,24 @@ export class ComposableToken extends Client {
 
   async allChildByDepthOf(tokenId: number): Promise<number> {
     const query = this.createQuery({
-      method: { name: 'get-all-child-by-depth-of', args: [`${tokenId}`] },
+      method: { name: 'all-child-by-depth-of', args: [`${tokenId}`] },
     });
     const res = await this.submitQuery(query);
-    return parseInt(res.result as string);
+    return Result.unwrapInt(res);
   }
 
   async leftChildOf(tokenId: number): Promise<number> {
     const query = this.createQuery({ method: { name: 'left-child-of', args: [`${tokenId}`] } });
     const res = await this.submitQuery(query);
-    return parseInt(res.result as string);
+    let leftChildId = parseInt(res.result as string);
+    return leftChildId ? leftChildId : null;
   }
 
   async rightChildOf(tokenId: number): Promise<number> {
     const query = this.createQuery({ method: { name: 'right-child-of', args: [`${tokenId}`] } });
     const res = await this.submitQuery(query);
-    return parseInt(res.result as string);
+    let rightChildId = parseInt(res.result as string);
+    return rightChildId ? rightChildId : null;
   }
 
   async childDepthOf(tokenId: number): Promise<number> {
